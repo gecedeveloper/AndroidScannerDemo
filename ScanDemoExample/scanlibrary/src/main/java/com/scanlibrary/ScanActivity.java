@@ -62,6 +62,20 @@ public class ScanActivity extends Activity implements IScanner, ComponentCallbac
     }
 
     @Override
+    public void onFilterFinish(Uri uri) {
+        ScanFragment fragment = new ScanFragment();
+        Bundle bundle = new Bundle();
+        bundle.putParcelable(ScanConstants.FILTER_RESULT, uri);
+        bundle.putBoolean(ScanConstants.AFTER_FILTER_APPLY, true);
+        fragment.setArguments(bundle);
+        android.app.FragmentManager fragmentManager = getFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.add(R.id.content, fragment);
+        fragmentTransaction.addToBackStack(ScanFragment.class.toString());
+        fragmentTransaction.commit();
+    }
+
+    @Override
     public void onTrimMemory(int level) {
         switch (level) {
             case ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN:

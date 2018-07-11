@@ -8,6 +8,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,7 +32,17 @@ public class ResultFragment extends Fragment {
     private Button grayModeButton;
     private Button bwButton;
     private Bitmap transformed;
+    private IScanner scanner;
     private static ProgressDialogFragment progressDialogFragment;
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        if (!(activity instanceof IScanner)) {
+            throw new ClassCastException("Activity must implement IScanner");
+        }
+        this.scanner = (IScanner) activity;
+    }
 
     public ResultFragment() {
     }
@@ -88,23 +99,16 @@ public class ResultFragment extends Fragment {
                 @Override
                 public void run() {
                     try {
-                        Intent data = new Intent();
+                        //Intent data = new Intent();
                         Bitmap bitmap = transformed;
                         if (bitmap == null) {
                             bitmap = original;
                         }
-                        Uri uri = Utils.getUri(getActivity(), bitmap);
-                        data.putExtra(ScanConstants.SCANNED_RESULT, uri);
-                        getActivity().setResult(Activity.RESULT_OK, data);
+
                         original.recycle();
                         System.gc();
-                        getActivity().runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                dismissDialog();
-                                getActivity().finish();
-                            }
-                        });
+                        dismissDialog();
+                        scanner.onFilterFinish(Utils.getUri(getActivity(), bitmap));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

@@ -45,6 +45,7 @@ public class ScanFragment extends Fragment {
     private ViewGroup transitionsContainer;
     private Button scanButton;
     private Button cropButton;
+    private Button filtersButton;
     private boolean polygonVisible;
 
     @Override
@@ -85,7 +86,8 @@ public class ScanFragment extends Fragment {
         transitionsContainer = (ViewGroup) view.findViewById(R.id.editionBar);
         scanButton = (Button) transitionsContainer.findViewById(R.id.scanButton);
         cropButton = (Button) transitionsContainer.findViewById(R.id.cropButton);
-
+        filtersButton = (Button) transitionsContainer.findViewById(R.id.filtersButton);
+        filtersButton.setOnClickListener(new FiltersButtonClickListener());
         scanButton.setOnClickListener(new ScanButtonClickListener());
         cropButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -113,6 +115,13 @@ public class ScanFragment extends Fragment {
         }
     }
 
+    private class FiltersButtonClickListener implements View.OnClickListener {
+        @Override
+        public void onClick(final View v) {
+            scanner.onScanFinish(Utils.getUri(getActivity(), original));
+        }
+    }
+
     private Bitmap getBitmap() {
         Uri uri = getUri();
         try {
@@ -126,8 +135,11 @@ public class ScanFragment extends Fragment {
     }
 
     private Uri getUri() {
-        Uri uri = getArguments().getParcelable(ScanConstants.SELECTED_BITMAP);
-        return uri;
+        if(getArguments().getBoolean(ScanConstants.AFTER_FILTER_APPLY)) {
+            return getArguments().getParcelable(ScanConstants.FILTER_RESULT);
+        } else {
+            return getArguments().getParcelable(ScanConstants.SELECTED_BITMAP);
+        }
     }
 
     private void setBitmap(Bitmap original) {
@@ -249,7 +261,6 @@ public class ScanFragment extends Fragment {
             Bitmap bitmap =  getScannedBitmap(original, points);
             Uri uri = Utils.getUri(getActivity(), bitmap);
             replaceCurrentImage(uri);
-            //scanner.onScanFinish(uri);
             return bitmap;
         }
 
@@ -276,6 +287,7 @@ public class ScanFragment extends Fragment {
             }
         });
     }
+
 
     protected void showProgressDialog(String message) {
         progressDialogFragment = new ProgressDialogFragment(message);
