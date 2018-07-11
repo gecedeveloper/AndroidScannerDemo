@@ -11,6 +11,11 @@ import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.transition.ChangeBounds;
+import android.transition.Fade;
+import android.transition.Transition;
+import android.transition.TransitionManager;
+import android.transition.TransitionSet;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -39,6 +44,8 @@ public class ScanFragment extends Fragment {
     private ProgressDialogFragment progressDialogFragment;
     private IScanner scanner;
     private Bitmap original;
+    private FrameLayout.LayoutParams layoutParams;
+    private Map<Integer, PointF> pointFs;
 
     @Override
     public void onAttach(Activity activity) {
@@ -75,6 +82,36 @@ public class ScanFragment extends Fragment {
                 }
             }
         });
+
+        final ViewGroup transitionsContainer = (ViewGroup) view.findViewById(R.id.editionBar);
+        final Button saveButton = (Button) transitionsContainer.findViewById(R.id.saveChanges);
+        final Button cropButton = (Button) transitionsContainer.findViewById(R.id.cropButton);
+
+        cropButton.setOnClickListener(new View.OnClickListener() {
+
+            boolean visible;
+
+            @Override
+            public void onClick(View v) {
+                TransitionManager.beginDelayedTransition(transitionsContainer, new Fade());
+                visible = !visible;
+                saveButton.setVisibility(visible ? View.VISIBLE : View.GONE);
+
+                // Validar tipo de boton, si es crop entonces hacer lo siguiente
+                showPolygon(visible);
+            }
+
+        });
+    }
+
+    private void showPolygon(Boolean visible) {
+        if(visible){
+            polygonView.setPoints(pointFs);
+            polygonView.setVisibility(View.VISIBLE);
+            polygonView.setLayoutParams(layoutParams);
+        } else {
+            polygonView.setVisibility(View.GONE);
+        }
     }
 
     private Bitmap getBitmap() {
@@ -98,13 +135,10 @@ public class ScanFragment extends Fragment {
         Bitmap scaledBitmap = scaledBitmap(original, sourceFrame.getWidth(), sourceFrame.getHeight());
         sourceImageView.setImageBitmap(scaledBitmap);
         Bitmap tempBitmap = ((BitmapDrawable) sourceImageView.getDrawable()).getBitmap();
-        Map<Integer, PointF> pointFs = getEdgePoints(tempBitmap);
-        polygonView.setPoints(pointFs);
-        polygonView.setVisibility(View.VISIBLE);
+        pointFs = getEdgePoints(tempBitmap);
         int padding = (int) getResources().getDimension(R.dimen.scanPadding);
-        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(tempBitmap.getWidth() + 2 * padding, tempBitmap.getHeight() + 2 * padding);
+        layoutParams = new FrameLayout.LayoutParams(tempBitmap.getWidth() + 2 * padding, tempBitmap.getHeight() + 2 * padding);
         layoutParams.gravity = Gravity.CENTER;
-        polygonView.setLayoutParams(layoutParams);
     }
 
     private Map<Integer, PointF> getEdgePoints(Bitmap tempBitmap) {

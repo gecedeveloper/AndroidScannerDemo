@@ -36,35 +36,14 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private void init() {
-        scanButton = (Button) findViewById(R.id.scanButton);
-        scanButton.setOnClickListener(new ScanButtonClickListener());
-        cameraButton = (Button) findViewById(R.id.cameraButton);
-        cameraButton.setOnClickListener(new ScanButtonClickListener(ScanConstants.OPEN_CAMERA));
-        mediaButton = (Button) findViewById(R.id.mediaButton);
-        mediaButton.setOnClickListener(new ScanButtonClickListener(ScanConstants.OPEN_MEDIA));
         scannedImageView = (ImageView) findViewById(R.id.scannedImage);
+        openCamera();
     }
 
-    private class ScanButtonClickListener implements View.OnClickListener {
 
-        private int preference;
-
-        public ScanButtonClickListener(int preference) {
-            this.preference = preference;
-        }
-
-        public ScanButtonClickListener() {
-        }
-
-        @Override
-        public void onClick(View v) {
-            startScan(preference);
-        }
-    }
-
-    protected void startScan(int preference) {
+    protected void openCamera() {
         Intent intent = new Intent(this, ScanActivity.class);
-        intent.putExtra(ScanConstants.OPEN_INTENT_PREFERENCE, preference);
+        intent.putExtra(ScanConstants.OPEN_INTENT_PREFERENCE, ScanConstants.OPEN_CAMERA);
         startActivityForResult(intent, REQUEST_CODE);
     }
 

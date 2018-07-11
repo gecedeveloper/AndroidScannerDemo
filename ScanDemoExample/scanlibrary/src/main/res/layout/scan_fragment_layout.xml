@@ -5,20 +5,88 @@
     android:background="@android:color/black"
     android:orientation="vertical">
 
-    <Button
-        android:id="@+id/scanButton"
-        android:layout_width="fill_parent"
+    <LinearLayout
+        android:background="@color/gray2"
+        android:id="@+id/editionBar"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="@color/bottom_background_color"
-        android:orientation="horizontal"
-        android:padding="@dimen/bottom_bar_padding"
-        android:text="@string/scan"></Button>
+        android:layout_gravity="center_vertical">
+
+        <Button
+            android:id="@+id/scanButton"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:drawableTop="@drawable/crop_image"
+            android:singleLine="true"
+            android:text="Recortar"
+            android:textAllCaps="false"
+            android:padding="@dimen/filter_bar_padding"
+            android:visibility="gone"
+            android:textColor="@android:color/white" />
+
+        <Button
+            android:id="@+id/cropButton"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:drawableTop="@drawable/crop_image"
+            android:singleLine="true"
+            android:text="Recortar"
+            android:textAllCaps="false"
+            android:padding="@dimen/filter_bar_padding"
+            android:textColor="@android:color/white" />
+
+        <Button
+            android:id="@+id/rotateButton"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:drawableTop="@drawable/ic_gray"
+            android:singleLine="true"
+            android:text="Rotar"
+            android:textAllCaps="false"
+            android:padding="@dimen/filter_bar_padding"
+            android:textColor="@android:color/white" />
+
+        <Button
+            android:id="@+id/filtersButton"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:drawableTop="@drawable/ic_enhamce_image"
+            android:singleLine="true"
+            android:text="Filtros"
+            android:textAllCaps="false"
+            android:padding="@dimen/filter_bar_padding"
+            android:textColor="@android:color/white" />
+
+        <Button
+            android:id="@+id/saveChanges"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@color/main"
+            android:drawableTop="@drawable/check"
+            android:singleLine="true"
+            android:text="Yep!"
+            android:textAllCaps="false"
+            android:visibility="gone"
+            android:padding="@dimen/filter_bar_padding"
+            android:textColor="@android:color/white"/>
+
+
+    </LinearLayout>
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/scanButton"
+        android:layout_above="@id/editionBar"
         android:layout_gravity="center"
         android:layout_margin="@dimen/scanPadding">
 
