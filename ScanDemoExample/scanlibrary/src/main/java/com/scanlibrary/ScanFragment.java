@@ -11,11 +11,8 @@ import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.transition.ChangeBounds;
 import android.transition.Fade;
-import android.transition.Transition;
 import android.transition.TransitionManager;
-import android.transition.TransitionSet;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -36,7 +33,6 @@ import java.util.Map;
  */
 public class ScanFragment extends Fragment {
 
-    private Button scanButton;
     private ImageView sourceImageView;
     private FrameLayout sourceFrame;
     private PolygonView polygonView;
@@ -46,6 +42,10 @@ public class ScanFragment extends Fragment {
     private Bitmap original;
     private FrameLayout.LayoutParams layoutParams;
     private Map<Integer, PointF> pointFs;
+    private ViewGroup transitionsContainer;
+    private Button scanButton;
+    private Button cropButton;
+    private boolean polygonVisible;
 
     @Override
     public void onAttach(Activity activity) {
@@ -68,9 +68,8 @@ public class ScanFragment extends Fragment {
     }
 
     private void init() {
+        polygonVisible = false;
         sourceImageView = (ImageView) view.findViewById(R.id.sourceImageView);
-        scanButton = (Button) view.findViewById(R.id.scanButton);
-        scanButton.setOnClickListener(new ScanButtonClickListener());
         sourceFrame = (FrameLayout) view.findViewById(R.id.sourceFrame);
         polygonView = (PolygonView) view.findViewById(R.id.polygonView);
         sourceFrame.post(new Runnable() {
@@ -83,25 +82,25 @@ public class ScanFragment extends Fragment {
             }
         });
 
-        final ViewGroup transitionsContainer = (ViewGroup) view.findViewById(R.id.editionBar);
-        final Button saveButton = (Button) transitionsContainer.findViewById(R.id.saveChanges);
-        final Button cropButton = (Button) transitionsContainer.findViewById(R.id.cropButton);
+        transitionsContainer = (ViewGroup) view.findViewById(R.id.editionBar);
+        scanButton = (Button) transitionsContainer.findViewById(R.id.scanButton);
+        cropButton = (Button) transitionsContainer.findViewById(R.id.cropButton);
 
+        scanButton.setOnClickListener(new ScanButtonClickListener());
         cropButton.setOnClickListener(new View.OnClickListener() {
-
-            boolean visible;
-
             @Override
             public void onClick(View v) {
-                TransitionManager.beginDelayedTransition(transitionsContainer, new Fade());
-                visible = !visible;
-                saveButton.setVisibility(visible ? View.VISIBLE : View.GONE);
-
-                // Validar tipo de boton, si es crop entonces hacer lo siguiente
-                showPolygon(visible);
+                toggleCheckButton();
             }
-
         });
+    }
+
+    private void toggleCheckButton() {
+        polygonVisible = !polygonVisible;
+        TransitionManager.beginDelayedTransition(transitionsContainer, new Fade());
+        scanButton.setVisibility(polygonVisible ? View.VISIBLE : View.GONE);
+        // Validar tipo de boton, si es crop entonces hacer lo siguiente
+        showPolygon(polygonVisible);
     }
 
     private void showPolygon(Boolean visible) {
@@ -249,7 +248,8 @@ public class ScanFragment extends Fragment {
         protected Bitmap doInBackground(Void... params) {
             Bitmap bitmap =  getScannedBitmap(original, points);
             Uri uri = Utils.getUri(getActivity(), bitmap);
-            scanner.onScanFinish(uri);
+            replaceCurrentImage(uri);
+            //scanner.onScanFinish(uri);
             return bitmap;
         }
 
@@ -259,6 +259,22 @@ public class ScanFragment extends Fragment {
             bitmap.recycle();
             dismissDialog();
         }
+    }
+
+    private void replaceCurrentImage(final Uri uri) {
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    original = Utils.getBitmap(getActivity(), uri);
+                    getActivity().getContentResolver().delete(uri, null, null);
+                    sourceImageView.setImageBitmap(original);
+                    toggleCheckButton();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     protected void showProgressDialog(String message) {
