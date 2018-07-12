@@ -118,7 +118,18 @@ public class ScanFragment extends Fragment {
     private class FiltersButtonClickListener implements View.OnClickListener {
         @Override
         public void onClick(final View v) {
-            scanner.onScanFinish(Utils.getUri(getActivity(), original));
+            showProgressDialog(getResources().getString(R.string.loading));
+            AsyncTask.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        scanner.onScanFinish(Utils.getUri(getActivity(), original));
+                        dismissDialog();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
         }
     }
 

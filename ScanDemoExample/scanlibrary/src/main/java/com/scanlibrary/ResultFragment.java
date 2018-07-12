@@ -8,6 +8,8 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.transition.Fade;
+import android.transition.TransitionManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,6 +35,8 @@ public class ResultFragment extends Fragment {
     private Button bwButton;
     private Bitmap transformed;
     private IScanner scanner;
+    private Boolean checkVisible;
+    private ViewGroup transitionsContainer;
     private static ProgressDialogFragment progressDialogFragment;
 
     @Override
@@ -55,6 +59,8 @@ public class ResultFragment extends Fragment {
     }
 
     private void init() {
+        checkVisible = false;
+        transitionsContainer = (ViewGroup) view.findViewById(R.id.filtersBar);
         scannedImageView = (ImageView) view.findViewById(R.id.scannedImage);
         originalButton = (Button) view.findViewById(R.id.original);
         originalButton.setOnClickListener(new OriginalButtonClickListener());
@@ -68,6 +74,14 @@ public class ResultFragment extends Fragment {
         setScannedImage(bitmap);
         doneButton = (Button) view.findViewById(R.id.doneButton);
         doneButton.setOnClickListener(new DoneButtonClickListener());
+    }
+
+    private void toggleCheckButton() {
+        checkVisible = !checkVisible;
+        if(checkVisible){
+            TransitionManager.beginDelayedTransition(transitionsContainer, new Fade());
+            doneButton.setVisibility(checkVisible ? View.VISIBLE : View.GONE);
+        }
     }
 
     private Bitmap getBitmap() {
@@ -99,16 +113,11 @@ public class ResultFragment extends Fragment {
                 @Override
                 public void run() {
                     try {
-                        //Intent data = new Intent();
-                        Bitmap bitmap = transformed;
-                        if (bitmap == null) {
-                            bitmap = original;
-                        }
-
-                        original.recycle();
-                        System.gc();
-                        dismissDialog();
+                        Bitmap bitmap = transformed == null ? original : transformed;
+                        //original.recycle();
+                        //System.gc();
                         scanner.onFilterFinish(Utils.getUri(getActivity(), bitmap));
+                        dismissDialog();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -121,6 +130,7 @@ public class ResultFragment extends Fragment {
         @Override
         public void onClick(final View v) {
             showProgressDialog(getResources().getString(R.string.applying_filter));
+            toggleCheckButton();
             AsyncTask.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -154,6 +164,7 @@ public class ResultFragment extends Fragment {
         @Override
         public void onClick(final View v) {
             showProgressDialog(getResources().getString(R.string.applying_filter));
+            toggleCheckButton();
             AsyncTask.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -188,6 +199,7 @@ public class ResultFragment extends Fragment {
         public void onClick(View v) {
             try {
                 showProgressDialog(getResources().getString(R.string.applying_filter));
+                toggleCheckButton();
                 transformed = original;
                 scannedImageView.setImageBitmap(original);
                 dismissDialog();
@@ -202,6 +214,7 @@ public class ResultFragment extends Fragment {
         @Override
         public void onClick(final View v) {
             showProgressDialog(getResources().getString(R.string.applying_filter));
+            toggleCheckButton();
             AsyncTask.execute(new Runnable() {
                 @Override
                 public void run() {
