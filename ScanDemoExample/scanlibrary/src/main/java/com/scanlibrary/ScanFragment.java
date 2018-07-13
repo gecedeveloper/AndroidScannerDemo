@@ -13,7 +13,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.transition.Fade;
 import android.transition.TransitionManager;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,6 +20,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -49,7 +49,6 @@ public class ScanFragment extends Fragment {
     private Button filtersButton;
     private boolean polygonVisible;
 
-
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
@@ -64,10 +63,6 @@ public class ScanFragment extends Fragment {
         view = inflater.inflate(R.layout.scan_fragment_layout, null);
         init();
         return view;
-    }
-
-    public ScanFragment() {
-
     }
 
     private void init() {
@@ -102,29 +97,6 @@ public class ScanFragment extends Fragment {
         rotateButton.setOnClickListener(new RotateButtonClickListener());
     }
 
-    private class ScanButtonClickListener implements View.OnClickListener {
-        @Override
-        public void onClick(View v) {
-            Map<Integer, PointF> points = polygonView.getPoints();
-            if (isScanPointsValid(points)) {
-                new ScanAsyncTask(points).execute();
-            } else {
-                showErrorDialog();
-            }
-        }
-    }
-
-    private class RotateButtonClickListener implements View.OnClickListener {
-        @Override
-        public void onClick(View v) {
-            rotate();
-        }
-    }
-
-    private void rotate() {
-        new RotateAsyncTask(this, original).execute();
-    }
-
     private class FiltersButtonClickListener implements View.OnClickListener {
         @Override
         public void onClick(final View v) {
@@ -141,6 +113,60 @@ public class ScanFragment extends Fragment {
                 }
             });
         }
+    }
+
+    private class ScanButtonClickListener implements View.OnClickListener {
+        @Override
+        public void onClick(View v) {
+            crop();
+        }
+    }
+
+    private class RotateButtonClickListener implements View.OnClickListener {
+        @Override
+        public void onClick(View v) {
+            rotate();
+        }
+    }
+
+    private void rotate() {
+        new RotateAsyncTask(this, original).execute();
+    }
+
+    private void crop() {
+        // Get image view dimensions
+        Map<String, Float> containerDimensions = new HashMap<>();
+        containerDimensions.put("width", (float) sourceImageView.getWidth());
+        containerDimensions.put("height", (float) sourceImageView.getHeight());
+
+        new CropAsyncTask(this, original, polygonView.getPoints(), containerDimensions)
+                .execute();
+    }
+
+    protected void setRotatedPhoto(Bitmap bitmap){
+        Uri uri = Utils.getUri(getActivity(), bitmap);
+        replaceCurrentImage(uri);
+    }
+
+    protected void setCroppedPhoto(Bitmap bitmap){
+        Uri uri = Utils.getUri(getActivity(), bitmap);
+        replaceCurrentImage(uri);
+        toggleCheckButton();
+    }
+
+    private void replaceCurrentImage(final Uri uri) {
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    original = Utils.getBitmap(getActivity(), uri);
+                    getActivity().getContentResolver().delete(uri, null, null);
+                    sourceImageView.setImageBitmap(original);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     private void toggleCheckButton() {
@@ -234,97 +260,22 @@ public class ScanFragment extends Fragment {
         return orderedPoints;
     }
 
-    private void showErrorDialog() {
-        SingleButtonDialogFragment fragment = new SingleButtonDialogFragment(R.string.ok, getString(R.string.cantCrop), "Error", true);
-        FragmentManager fm = getActivity().getFragmentManager();
-        fragment.show(fm, SingleButtonDialogFragment.class.toString());
-    }
-
-    private boolean isScanPointsValid(Map<Integer, PointF> points) {
-        return points.size() == 4;
-    }
-
     private Bitmap scaledBitmap(Bitmap bitmap, int width, int height) {
         Matrix m = new Matrix();
         m.setRectToRect(new RectF(0, 0, bitmap.getWidth(), bitmap.getHeight()), new RectF(0, 0, width, height), Matrix.ScaleToFit.CENTER);
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), m, true);
     }
 
-    private Bitmap getScannedBitmap(Bitmap original, Map<Integer, PointF> points) {
-        int width = original.getWidth();
-        int height = original.getHeight();
-        float xRatio = (float) original.getWidth() / sourceImageView.getWidth();
-        float yRatio = (float) original.getHeight() / sourceImageView.getHeight();
-
-        float x1 = (points.get(0).x) * xRatio;
-        float x2 = (points.get(1).x) * xRatio;
-        float x3 = (points.get(2).x) * xRatio;
-        float x4 = (points.get(3).x) * xRatio;
-        float y1 = (points.get(0).y) * yRatio;
-        float y2 = (points.get(1).y) * yRatio;
-        float y3 = (points.get(2).y) * yRatio;
-        float y4 = (points.get(3).y) * yRatio;
-        Log.d("", "POints(" + x1 + "," + y1 + ")(" + x2 + "," + y2 + ")(" + x3 + "," + y3 + ")(" + x4 + "," + y4 + ")");
-        Bitmap _bitmap = ((ScanActivity) getActivity()).getScannedBitmap(original, x1, y1, x2, y2, x3, y3, x4, y4);
-        return _bitmap;
-    }
-
-    private class ScanAsyncTask extends AsyncTask<Void, Void, Bitmap> {
-
-        private Map<Integer, PointF> points;
-
-        public ScanAsyncTask(Map<Integer, PointF> points) {
-            this.points = points;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            showProgressDialog(getString(R.string.scanning));
-        }
-
-        @Override
-        protected Bitmap doInBackground(Void... params) {
-            Bitmap bitmap =  getScannedBitmap(original, points);
-            Uri uri = Utils.getUri(getActivity(), bitmap);
-            replaceCurrentImage(uri);
-            return bitmap;
-        }
-
-        @Override
-        protected void onPostExecute(Bitmap bitmap) {
-            super.onPostExecute(bitmap);
-            bitmap.recycle();
-            dismissDialog();
-        }
-    }
-
-    private void replaceCurrentImage(final Uri uri) {
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    original = Utils.getBitmap(getActivity(), uri);
-                    getActivity().getContentResolver().delete(uri, null, null);
-                    sourceImageView.setImageBitmap(original);
-                    toggleCheckButton();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-    }
-
-    protected void setRotatedPhoto(Bitmap bitmap){
-        Uri uri = Utils.getUri(getActivity(), bitmap);
-        replaceCurrentImage(uri);
-    }
-
-
     protected void showProgressDialog(String message) {
         progressDialogFragment = new ProgressDialogFragment(message);
         FragmentManager fm = getFragmentManager();
         progressDialogFragment.show(fm, ProgressDialogFragment.class.toString());
+    }
+
+    protected void showErrorDialog() {
+        SingleButtonDialogFragment fragment = new SingleButtonDialogFragment(R.string.ok, getString(R.string.cantCrop), "Error", true);
+        FragmentManager fm = getActivity().getFragmentManager();
+        fragment.show(fm, SingleButtonDialogFragment.class.toString());
     }
 
     protected void dismissDialog() {

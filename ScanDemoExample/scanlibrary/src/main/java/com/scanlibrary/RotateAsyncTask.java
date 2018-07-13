@@ -42,5 +42,4 @@ public class RotateAsyncTask extends AsyncTask<Void, Void, Bitmap> {
         scanFragment.setRotatedPhoto(bitmap);
         bitmap.recycle();
     }
-
 }
