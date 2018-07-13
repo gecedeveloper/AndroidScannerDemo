@@ -45,8 +45,10 @@ public class ScanFragment extends Fragment {
     private ViewGroup transitionsContainer;
     private Button scanButton;
     private Button cropButton;
+    private Button rotateButton;
     private Button filtersButton;
     private boolean polygonVisible;
+
 
     @Override
     public void onAttach(Activity activity) {
@@ -83,9 +85,11 @@ public class ScanFragment extends Fragment {
             }
         });
 
+
         transitionsContainer = (ViewGroup) view.findViewById(R.id.editionBar);
         scanButton = (Button) transitionsContainer.findViewById(R.id.scanButton);
         cropButton = (Button) transitionsContainer.findViewById(R.id.cropButton);
+        rotateButton = (Button) transitionsContainer.findViewById(R.id.rotateButton);
         filtersButton = (Button) transitionsContainer.findViewById(R.id.filtersButton);
         filtersButton.setOnClickListener(new FiltersButtonClickListener());
         scanButton.setOnClickListener(new ScanButtonClickListener());
@@ -95,24 +99,30 @@ public class ScanFragment extends Fragment {
                 toggleCheckButton();
             }
         });
+        rotateButton.setOnClickListener(new RotateButtonClickListener());
     }
 
-    private void toggleCheckButton() {
-        polygonVisible = !polygonVisible;
-        TransitionManager.beginDelayedTransition(transitionsContainer, new Fade());
-        scanButton.setVisibility(polygonVisible ? View.VISIBLE : View.GONE);
-        // Validar tipo de boton, si es crop entonces hacer lo siguiente
-        showPolygon(polygonVisible);
-    }
-
-    private void showPolygon(Boolean visible) {
-        if(visible){
-            polygonView.setPoints(pointFs);
-            polygonView.setVisibility(View.VISIBLE);
-            polygonView.setLayoutParams(layoutParams);
-        } else {
-            polygonView.setVisibility(View.GONE);
+    private class ScanButtonClickListener implements View.OnClickListener {
+        @Override
+        public void onClick(View v) {
+            Map<Integer, PointF> points = polygonView.getPoints();
+            if (isScanPointsValid(points)) {
+                new ScanAsyncTask(points).execute();
+            } else {
+                showErrorDialog();
+            }
         }
+    }
+
+    private class RotateButtonClickListener implements View.OnClickListener {
+        @Override
+        public void onClick(View v) {
+            rotate();
+        }
+    }
+
+    private void rotate() {
+        new RotateAsyncTask(this, original).execute();
     }
 
     private class FiltersButtonClickListener implements View.OnClickListener {
@@ -130,6 +140,24 @@ public class ScanFragment extends Fragment {
                     }
                 }
             });
+        }
+    }
+
+    private void toggleCheckButton() {
+        polygonVisible = !polygonVisible;
+        TransitionManager.beginDelayedTransition(transitionsContainer, new Fade());
+        scanButton.setVisibility(polygonVisible ? View.VISIBLE : View.GONE);
+        // Validar tipo de boton, si es crop entonces hacer lo siguiente
+        showPolygon(polygonVisible);
+    }
+
+    private void showPolygon(Boolean visible) {
+        if(visible){
+            polygonView.setPoints(pointFs);
+            polygonView.setVisibility(View.VISIBLE);
+            polygonView.setLayoutParams(layoutParams);
+        } else {
+            polygonView.setVisibility(View.GONE);
         }
     }
 
@@ -204,18 +232,6 @@ public class ScanFragment extends Fragment {
             orderedPoints = getOutlinePoints(tempBitmap);
         }
         return orderedPoints;
-    }
-
-    private class ScanButtonClickListener implements View.OnClickListener {
-        @Override
-        public void onClick(View v) {
-            Map<Integer, PointF> points = polygonView.getPoints();
-            if (isScanPointsValid(points)) {
-                new ScanAsyncTask(points).execute();
-            } else {
-                showErrorDialog();
-            }
-        }
     }
 
     private void showErrorDialog() {
@@ -297,6 +313,11 @@ public class ScanFragment extends Fragment {
                 }
             }
         });
+    }
+
+    protected void setRotatedPhoto(Bitmap bitmap){
+        Uri uri = Utils.getUri(getActivity(), bitmap);
+        replaceCurrentImage(uri);
     }
 
 
