@@ -3,20 +3,18 @@ package com.scanlibrary;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.transition.Fade;
 import android.transition.TransitionManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import java.io.IOException;
 
@@ -27,7 +25,8 @@ public class ResultFragment extends Fragment {
 
     private View view;
     private ImageView scannedImageView;
-    private Button doneButton;
+    private Button backToEdition;
+    private ImageButton doneButton;
     private Bitmap original;
     private Button originalButton;
     private Button MagicColorButton;
@@ -60,6 +59,7 @@ public class ResultFragment extends Fragment {
 
     private void init() {
         checkVisible = false;
+        backToEdition = (Button) view.findViewById(R.id.backToEdition);
         transitionsContainer = (ViewGroup) view.findViewById(R.id.filtersBar);
         scannedImageView = (ImageView) view.findViewById(R.id.scannedImage);
         originalButton = (Button) view.findViewById(R.id.original);
@@ -72,37 +72,17 @@ public class ResultFragment extends Fragment {
         bwButton.setOnClickListener(new BWButtonClickListener());
         Bitmap bitmap = getBitmap();
         setScannedImage(bitmap);
-        doneButton = (Button) view.findViewById(R.id.doneButton);
+        doneButton = (ImageButton) view.findViewById(R.id.doneButton);
         doneButton.setOnClickListener(new DoneButtonClickListener());
+        backToEdition.setOnClickListener(new BackToEditionClickListener());
     }
 
-    private void toggleCheckButton() {
-        checkVisible = !checkVisible;
-        if(checkVisible){
-            TransitionManager.beginDelayedTransition(transitionsContainer, new Fade());
-            doneButton.setVisibility(checkVisible ? View.VISIBLE : View.GONE);
+
+    private class BackToEditionClickListener implements View.OnClickListener  {
+        @Override
+        public void onClick(View v) {
+            getFragmentManager().popBackStackImmediate();
         }
-    }
-
-    private Bitmap getBitmap() {
-        Uri uri = getUri();
-        try {
-            original = Utils.getBitmap(getActivity(), uri);
-            getActivity().getContentResolver().delete(uri, null, null);
-            return original;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    private Uri getUri() {
-        Uri uri = getArguments().getParcelable(ScanConstants.SCANNED_RESULT);
-        return uri;
-    }
-
-    public void setScannedImage(Bitmap scannedImage) {
-        scannedImageView.setImageBitmap(scannedImage);
     }
 
     private class DoneButtonClickListener implements View.OnClickListener {
@@ -242,6 +222,35 @@ public class ResultFragment extends Fragment {
                 }
             });
         }
+    }
+
+    private void toggleCheckButton() {
+        checkVisible = !checkVisible;
+        if(checkVisible){
+            TransitionManager.beginDelayedTransition(transitionsContainer, new Fade());
+            doneButton.setVisibility(checkVisible ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    private Bitmap getBitmap() {
+        Uri uri = getUri();
+        try {
+            original = Utils.getBitmap(getActivity(), uri);
+            getActivity().getContentResolver().delete(uri, null, null);
+            return original;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private Uri getUri() {
+        Uri uri = getArguments().getParcelable(ScanConstants.SCANNED_RESULT);
+        return uri;
+    }
+
+    public void setScannedImage(Bitmap scannedImage) {
+        scannedImageView.setImageBitmap(scannedImage);
     }
 
     protected synchronized void showProgressDialog(String message) {

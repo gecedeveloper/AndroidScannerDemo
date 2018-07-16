@@ -11,4 +11,6 @@
     <dimen name="bottom_bar_padding">15dp</dimen>
     <dimen name="filter_bar_padding">8dp</dimen>
 
+
+    <dimen name="confirm_bar_padding">20dp</dimen>
 </resources>

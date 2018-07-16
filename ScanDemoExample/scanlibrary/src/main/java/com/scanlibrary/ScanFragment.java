@@ -11,7 +11,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.transition.Fade;
 import android.transition.TransitionManager;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -20,7 +19,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -43,10 +41,13 @@ public class ScanFragment extends Fragment {
     private FrameLayout.LayoutParams layoutParams;
     private Map<Integer, PointF> pointFs;
     private ViewGroup transitionsContainer;
+    private ViewGroup confirmContainer;
     private Button scanButton;
     private Button cropButton;
+    private Button cancelButton;
     private Button rotateButton;
     private Button filtersButton;
+    private Button backToCamera;
     private boolean polygonVisible;
 
     @Override
@@ -79,22 +80,21 @@ public class ScanFragment extends Fragment {
                 }
             }
         });
-
+        backToCamera = (Button) view.findViewById(R.id.backToCamera);
+        confirmContainer = (ViewGroup) view.findViewById(R.id.confirmBar);
+        scanButton = (Button) confirmContainer.findViewById(R.id.scanButton);
+        cancelButton = (Button) confirmContainer.findViewById(R.id.cancelButton);
 
         transitionsContainer = (ViewGroup) view.findViewById(R.id.editionBar);
-        scanButton = (Button) transitionsContainer.findViewById(R.id.scanButton);
         cropButton = (Button) transitionsContainer.findViewById(R.id.cropButton);
         rotateButton = (Button) transitionsContainer.findViewById(R.id.rotateButton);
         filtersButton = (Button) transitionsContainer.findViewById(R.id.filtersButton);
         filtersButton.setOnClickListener(new FiltersButtonClickListener());
         scanButton.setOnClickListener(new ScanButtonClickListener());
-        cropButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                toggleCheckButton();
-            }
-        });
+        cancelButton.setOnClickListener(new CancelButtonClickListener());
+        cropButton.setOnClickListener(new CropButtonClickListener());
         rotateButton.setOnClickListener(new RotateButtonClickListener());
+        backToCamera.setOnClickListener(new BackToCameraClickListener());
     }
 
     private class FiltersButtonClickListener implements View.OnClickListener {
@@ -115,6 +115,20 @@ public class ScanFragment extends Fragment {
         }
     }
 
+    private class CancelButtonClickListener implements View.OnClickListener {
+        @Override
+        public void onClick(final View v) {
+            toggleConfirmBar();
+        }
+    }
+
+    private class CropButtonClickListener implements View.OnClickListener {
+        @Override
+        public void onClick(final View v) {
+            toggleConfirmBar();
+        }
+    }
+
     private class ScanButtonClickListener implements View.OnClickListener {
         @Override
         public void onClick(View v) {
@@ -126,6 +140,13 @@ public class ScanFragment extends Fragment {
         @Override
         public void onClick(View v) {
             rotate();
+        }
+    }
+
+    private class BackToCameraClickListener implements View.OnClickListener  {
+        @Override
+        public void onClick(View v) {
+            getFragmentManager().popBackStack();
         }
     }
 
@@ -151,7 +172,7 @@ public class ScanFragment extends Fragment {
     protected void setCroppedPhoto(Bitmap bitmap){
         Uri uri = Utils.getUri(getActivity(), bitmap);
         replaceCurrentImage(uri);
-        toggleCheckButton();
+        toggleConfirmBar();
     }
 
     private void replaceCurrentImage(final Uri uri) {
@@ -169,11 +190,11 @@ public class ScanFragment extends Fragment {
         });
     }
 
-    private void toggleCheckButton() {
+    private void toggleConfirmBar() {
         polygonVisible = !polygonVisible;
-        TransitionManager.beginDelayedTransition(transitionsContainer, new Fade());
-        scanButton.setVisibility(polygonVisible ? View.VISIBLE : View.GONE);
-        // Validar tipo de boton, si es crop entonces hacer lo siguiente
+        TransitionManager.beginDelayedTransition(confirmContainer);
+        confirmContainer.setVisibility(polygonVisible ? View.VISIBLE : View.GONE);
+        transitionsContainer.setVisibility(polygonVisible ? View.GONE : View.VISIBLE);
         showPolygon(polygonVisible);
     }
 

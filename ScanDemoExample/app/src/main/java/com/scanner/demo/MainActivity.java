@@ -20,13 +20,9 @@ import com.scanlibrary.ScanConstants;
 import java.io.IOException;
 
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends Activity {
 
     private static final int REQUEST_CODE = 99;
-    private Button scanButton;
-    private Button cameraButton;
-    private Button mediaButton;
-    private ImageView scannedImageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,15 +32,12 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private void init() {
-        scannedImageView = (ImageView) findViewById(R.id.scannedImage);
-        openCamera();
+        startScan();
     }
 
-
-    protected void openCamera() {
+    public void startScan() {
         Intent intent = new Intent(this, ScanActivity.class);
-        intent.putExtra(ScanConstants.OPEN_INTENT_PREFERENCE, ScanConstants.OPEN_CAMERA);
-        startActivityForResult(intent, REQUEST_CODE);
+        startActivity(intent);
     }
 
     @Override
@@ -56,36 +49,10 @@ public class MainActivity extends ActionBarActivity {
             try {
                 bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
                 getContentResolver().delete(uri, null, null);
-                scannedImageView.setImageBitmap(bitmap);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    private Bitmap convertByteArrayToBitmap(byte[] data) {
-        return BitmapFactory.decodeByteArray(data, 0, data.length);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
 }
